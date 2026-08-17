@@ -11,18 +11,36 @@ export default function Home() {
   const [semanaId, setSemanaId] = useState(null);
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
+  const [nombre, setNombre] = useState('');
   const [authError, setAuthError] = useState('');
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSesion(data.session));
-    supabase.auth.onAuthStateChange((_e, s) => setSesion(s));
-    supabase.from('semanas').select('id').order('id', { ascending: false })
-      .limit(1).single().then(({ data }) => setSemanaId(data?.id));
+    async function cargarSemanaActual() {
+      const { data } = await supabase.from('semanas').select('id')
+        .order('id', { ascending: false }).limit(1).single();
+      setSemanaId(data?.id);
+    }
+
+    supabase.auth.getSession().then(({ data }) => {
+      setSesion(data.session);
+      if (data.session) cargarSemanaActual();
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => {
+      setSesion(s);
+      if (s) cargarSemanaActual();
+    });
+
+    return () => listener.subscription.unsubscribe();
   }, []);
 
-  function validarCampos() {
+  function validarCampos(esRegistro) {
     if (!email.trim() || !pass.trim()) {
       setAuthError('Completá el email y la contraseña.');
+      return false;
+    }
+    if (esRegistro && !nombre.trim()) {
+      setAuthError('Completá tu nombre.');
       return false;
     }
     if (pass.length < 6) {
@@ -34,15 +52,26 @@ export default function Home() {
   }
 
   async function entrar() {
-    if (!validarCampos()) return;
+    if (!validarCampos(false)) return;
     const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
     if (error) setAuthError(error.message);
   }
 
   async function registrarme() {
-    if (!validarCampos()) return;
-    const { error } = await supabase.auth.signUp({ email, password: pass });
-    if (error) setAuthError(error.message);
+    if (!validarCampos(true)) return;
+    const { error } = await supabase.auth.signUp({
+      email,
+      password: pass,
+      options: { data: { nombre: nombre.trim() } },
+    });
+    if (error) {
+      const msg = error.message.toLowerCase();
+      setAuthError(
+        msg.includes('unique') || msg.includes('duplicate')
+          ? 'Ese nombre ya está en uso, elegí otro.'
+          : error.message
+      );
+    }
   }
 
   if (!sesion)
@@ -53,6 +82,8 @@ export default function Home() {
           value={email} onChange={(e) => setEmail(e.target.value)} />
         <input className="w-full border rounded-lg px-3 py-2" type="password"
           placeholder="Contraseña" value={pass} onChange={(e) => setPass(e.target.value)} />
+        <input className="w-full border rounded-lg px-3 py-2" placeholder="Nombre (solo para registrarte)"
+          value={nombre} onChange={(e) => setNombre(e.target.value)} />
         {authError && (
           <p className="text-sm text-red-600 text-center">{authError}</p>
         )}
