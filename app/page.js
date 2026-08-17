@@ -4,6 +4,7 @@ import { supabase } from './lib/clientes';
 import SubirPelicula from './components/SubirPelicula';
 import FeedVotacion from './components/FeedVotacion';
 import Leaderboard from './components/Leaderboard';
+import Historial from './components/Historial';
 
 export default function Home() {
   const [tab, setTab] = useState('feed');
@@ -101,6 +102,7 @@ export default function Home() {
       {tab === 'subir' && <SubirPelicula semanaId={semanaId} />}
       {tab === 'feed' && <FeedVotacion />}
       {tab === 'ranking' && <Leaderboard />}
+      {tab === 'historial' && <Historial />}
 
       <button
         onClick={() => supabase.auth.signOut()}
@@ -110,10 +112,10 @@ export default function Home() {
       </button>
 
       <nav className="fixed bottom-0 inset-x-0 bg-white border-t flex">
-        {[['feed', '🎬 Feed'], ['subir', '⬆️ Subir'], ['ranking', '✨ Ranking']].map(
+        {[['feed', '🎬 Feed'], ['subir', '⬆️ Subir'], ['ranking', '✨ Ranking'], ['historial', '🗂️ Historial']].map(
           ([id, label]) => (
             <button key={id} onClick={() => setTab(id)}
-              className={`flex-1 py-3 text-sm ${tab === id ? 'font-bold' : 'text-gray-500'}`}>
+              className={`flex-1 py-3 text-xs ${tab === id ? 'font-bold' : 'text-gray-500'}`}>
               {label}
             </button>
           )
