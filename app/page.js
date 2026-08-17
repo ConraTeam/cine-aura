@@ -102,6 +102,13 @@ export default function Home() {
       {tab === 'feed' && <FeedVotacion />}
       {tab === 'ranking' && <Leaderboard />}
 
+      <button
+        onClick={() => supabase.auth.signOut()}
+        className="fixed top-3 right-3 text-xs text-gray-500 border rounded-full px-3 py-1"
+      >
+        Cerrar sesión
+      </button>
+
       <nav className="fixed bottom-0 inset-x-0 bg-white border-t flex">
         {[['feed', '🎬 Feed'], ['subir', '⬆️ Subir'], ['ranking', '✨ Ranking']].map(
           ([id, label]) => (
